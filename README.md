@@ -113,7 +113,7 @@ modules/
 ```
 
 ## Notes
-- State files should not be committed to version control. Add them to `.gitignore`.
+- State files should not be committed to version control. Add them to `.gitignore`..
 - Customize variables in `terraform.tfvars` as needed for your environment.
 
 ## License
