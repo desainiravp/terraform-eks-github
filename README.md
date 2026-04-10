@@ -13,7 +13,7 @@ This repository contains Terraform configurations for deploying and managing an 
     - `backend.tf`: Backend configuration for production.
     - `main.tf`: Main Terraform configuration for production.
     - `outputs.tf`: Output variables for production.
-    - `terraform.tfstate`, `terraform.tfstate.backup`: State files (should be in .gitignore).
+    - `terraform.tfstate`, `terraform.tfstate.backup`: State files (should be in .gitignore)..
     - `terraform.tfvars`: Variable values for production.
     - `variables.tf`: Variable definitions for production.
     - `versions.tf`: Version constraints for production.
