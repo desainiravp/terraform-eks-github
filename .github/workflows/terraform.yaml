@@ -1,12 +1,20 @@
-name: Deploy EKS Cluster
+name: Terraform Deploy
 
 on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose action: apply or destroy"
+        required: true
+        default: apply
 
 jobs:
-  terraform:
+
+  terraform-plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
 
     permissions:
@@ -24,7 +32,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -37,6 +45,69 @@ jobs:
         run: terraform plan
         working-directory: envs/prod
 
+
+  terraform-apply:
+    name: Terraform Apply (Manual Approval)
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+
+    environment:
+      name: prod   # 👈 IMPORTANT for approval
+
+    permissions:
+      id-token: write
+      contents: read
+
+    if: github.event.inputs.action == 'apply' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: envs/prod
+
+
+  terraform-destroy:
+    name: Terraform Destroy (Manual Approval)
+    runs-on: ubuntu-latest
+
+    environment:
+      name: prod   # 👈 same env → approval required
+
+    permissions:
+      id-token: write
+      contents: read
+
+    if: github.event.inputs.action == 'destroy'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: envs/prod
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
         working-directory: envs/prod
